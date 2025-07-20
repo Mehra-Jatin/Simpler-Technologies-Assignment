@@ -77,7 +77,7 @@ const verificationEmailHTML = (verificationCode) => `
       ${verificationCode}
     </div>
     <div class="message">
-      <p>This code will expire in 5 minutes. Do not share it with anyone.</p>
+      <p>This code will expire in 24 hours. Do not share it with anyone.</p>
     </div>
     <div class="footer">
       If you didn't request this, please ignore this message.

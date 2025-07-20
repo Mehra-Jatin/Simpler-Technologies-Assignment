@@ -17,7 +17,7 @@ const client = twilio(accountSid, authToken);
 export const sendVerificationSMS = async (phoneNumber, verificationCode) => {
   try {
     const message = await client.messages.create({
-      body: `Your Simpler verification code is ${verificationCode}`,
+      body: `Your Simpler verification code is ${verificationCode} the code will expire in 24 hours.`,
       to: `+91${phoneNumber}`,
       from: messagingServiceSid ? undefined : phoneNumberFrom,
       messagingServiceSid: messagingServiceSid || undefined, 
