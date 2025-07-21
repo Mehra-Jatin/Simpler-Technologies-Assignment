@@ -19,7 +19,7 @@ export const createOrder = async (req, res) => {
       user: userId,
       items,
       totalAmount: amount,
-      paymentStatus: 'Pending',
+      paymentStatus: 'Failed',
       OrderId: razorpayOrder.id,
     });
 
