@@ -82,7 +82,7 @@ Create a .env file inside the client/ folder and add the following:
 .env
 ```
 VITE_SERVER_URL=http://localhost:5000
-VITE_RAZORPAY_KEY_ID=your_razorpay_key
+VITE_RAZORPAY_ID=your_razorpay_key
 ```
 
 Then start the frontend server:
