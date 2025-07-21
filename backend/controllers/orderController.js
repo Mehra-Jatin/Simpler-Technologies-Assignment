@@ -29,6 +29,7 @@ export const createOrder = async (req, res) => {
       amount: amount * 100,
     });
   } catch (error) {
+    console.error("Error creating order:", error);
     res.status(500).json({ error: 'Order creation failed' });
   }
 };
@@ -36,7 +37,8 @@ export const createOrder = async (req, res) => {
 
 
 export const verifyPayment = async (req, res) => {
-  const {
+  try{
+    const {
     razorpayOrderId,
     razorpayPaymentId,
     razorpaySignature,
@@ -65,6 +67,11 @@ export const verifyPayment = async (req, res) => {
     order.paymentStatus = 'Failed';
     await order.save();
     return res.status(400).json({ success: false });
+  }
+  }
+  catch (error) {
+    console.error("Payment verification error:", error);
+    return res.status(500).json({ error: 'Payment verification failed' });
   }
 };
 
