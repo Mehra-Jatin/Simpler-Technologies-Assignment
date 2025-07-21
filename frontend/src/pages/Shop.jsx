@@ -44,7 +44,7 @@ const Shop = () => {
 
       // Step 2: Open Razorpay payment UI
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID, // public Razorpay key
+        key: import.meta.env.VITE_RAZORPAY_ID, // public Razorpay key
         amount,
         currency: "INR",
         name: "Shoe Store",
