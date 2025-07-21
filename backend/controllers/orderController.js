@@ -20,6 +20,7 @@ export const createOrder = async (req, res) => {
       items,
       totalAmount: amount,
       paymentStatus: 'Pending',
+      OrderId: razorpayOrder.id,
     });
 
     res.status(200).json({
@@ -43,7 +44,7 @@ export const verifyPayment = async (req, res) => {
   } = req.body;
 
   const generatedSignature = crypto
-    .createHmac('sha256', process.env.RAZORPAY_SECRET)
+    .createHmac('sha256', process.env.RAZORPAY_API_SECRET)
     .update(`${razorpayOrderId}|${razorpayPaymentId}`)
     .digest('hex');
 
@@ -64,5 +65,22 @@ export const verifyPayment = async (req, res) => {
     order.paymentStatus = 'Failed';
     await order.save();
     return res.status(400).json({ success: false });
+  }
+};
+
+
+export const getOrders = async (req, res) => {
+  try {
+    const userId = req.user.id; 
+    const orders = await Order.find({ user: userId }).sort({ createdAt: -1 });
+    
+    if (!orders || orders.length === 0) {
+      return res.status(404).json({ message: 'No orders found' });
+    }
+
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch orders' });
   }
 };

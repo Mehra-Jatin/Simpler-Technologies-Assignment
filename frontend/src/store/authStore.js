@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 const useAuthStore = create((set, get) => ({
   user: null,
   loading: true,
+  orders: [],
 
   login: async (identifier, password) => {
     try {
@@ -79,6 +80,19 @@ const useAuthStore = create((set, get) => ({
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Verification failed");
+    }
+  },
+
+  fetchOrders: async () => {
+    try {
+      const res = await axiosInstance.get('/api/orders/get');
+      if (res.status === 200) {
+        set({ orders: res.data });
+      } else {
+        toast.error("Failed to fetch orders");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to fetch orders");
     }
   },
 

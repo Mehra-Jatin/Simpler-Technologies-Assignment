@@ -1,96 +1,88 @@
 import React, { useEffect, useState } from 'react';
+import useAuthStore from '../store/authStore';
 
-// Dummy products (available on frontend)
-const dummyProducts = [
-  { id: 'shoe001', name: 'Nike Air Max 90', image: 'https://via.placeholder.com/150', price: 7999 },
-  { id: 'shoe002', name: 'Adidas Ultraboost', image: 'https://via.placeholder.com/150', price: 9999 },
-  { id: 'shoe003', name: 'Puma RS-X', image: 'https://via.placeholder.com/150', price: 6999 },
+const products = [
+  {
+    id: 1,
+    name: 'Nike Air Max 90',
+    image: 'https://static.nike.com/a/images/t_PDP_864_v1/f_auto,b_rgb:f5f5f5/0bd7e3c7-2680-444b-8ba3-3a6cff7b39ae/custom-nike-air-max-90-shoes-by-you.png',
+    price: 7999,
+    rating: 4.5,
+  },
+  {
+    id: 2,
+    name: 'Adidas Ultraboost',
+    image: 'https://m.media-amazon.com/images/I/51b3cxB+1NL._SY695_.jpg',
+    price: 9999,
+    rating: 4.7,
+  },
+  {
+    id: 3,
+    name: 'Puma RS-X',
+    image: 'https://assets.ajio.com/medias/sys_master/root/20230214/cV3Y/63ebb6aeaeb26924e36ee5d3/-473Wx593H-469437918-black-MODEL.jpg',
+    price: 6999,
+    rating: 4.3,
+  },
 ];
 
-// Simulated API fetch
-const fetchOrders = async () => {
-  // Simulated backend response
-  return [
-    {
-      _id: 'order123',
-      items: [
-        { productId: 'shoe001', quantity: 1 },
-        { productId: 'shoe002', quantity: 2 }
-      ],
-      totalAmount: 27997,
-      paymentStatus: 'Paid',
-      createdAt: '2025-07-20T12:34:56.789Z',
-    },
-    {
-      _id: 'order124',
-      items: [
-        { productId: 'shoe003', quantity: 1 }
-      ],
-      totalAmount: 6999,
-      paymentStatus: 'Paid',
-      createdAt: '2025-07-18T10:12:00.123Z',
-    },
-  ];
-};
-
 const Order = () => {
-  const [orders, setOrders] = useState([]);
+  const { orders, fetchOrders } = useAuthStore();
 
   useEffect(() => {
     const loadOrders = async () => {
-      const res = await fetchOrders();
-      setOrders(res);
+      await fetchOrders();
     };
     loadOrders();
   }, []);
 
   const getProductDetails = (productId) => {
-    return dummyProducts.find((p) => p.id === productId);
+    return products.find((p) => p.id === productId);
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 bg-gray-600">
-      <h2 className="text-3xl font-bold mb-6 text-center">Your Orders</h2>
+    <div className="max-w-4xl mx-auto p-4 bg-gray-600 min-h-screen">
+      <h2 className="text-3xl font-bold mb-6 text-center text-white">Your Orders</h2>
 
       {orders.length === 0 ? (
-        <p className="text-center">No orders found.</p>
+        <p className="text-center text-white">No orders found.</p>
       ) : (
-        orders.map((order) => (
-          <div key={order._id} className="mb-6 p-4 rounded-lg shadow-md bg-base-100">
-            <div className="flex justify-between mb-2">
-              <div>
-                <p className="font-semibold">Order ID: {order._id}</p>
-                <p className="text-sm text-gray-500">
-                  Date: {new Date(order.createdAt).toLocaleDateString()}
-                </p>
+        orders.map((order) => {
+          const productId = parseInt(order.items);
+          const product = getProductDetails(productId);
+
+          return (
+            <div key={order._id} className="mb-6 p-4 rounded-lg shadow-md bg-base-100">
+              <div className="flex justify-between mb-2">
+                <div>
+                  <p className="font-semibold">Order ID: {order._id}</p>
+                  <p className="text-sm text-gray-500">
+                    Date: {new Date(order.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className={`badge ${order.paymentStatus === 'Paid' ? 'badge-success' : 'badge-error'}`}>
+                    {order.paymentStatus}
+                  </p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-semibold text-success">₹{order.totalAmount}</p>
-                <p className={`badge ${order.paymentStatus === 'Paid' ? 'badge-success' : 'badge-error'}`}>
-                  {order.paymentStatus}
-                </p>
-              </div>
-            </div>
 
-            <div className="divider my-2" />
+              <div className="divider my-2" />
 
-            {order.items.map((item, index) => {
-              const product = getProductDetails(item.productId);
-              if (!product) return null;
-
-              return (
-                <div key={index} className="flex items-center gap-4 mb-3">
+              {product ? (
+                <div className="flex items-center gap-4 mb-3">
                   <img src={product.image} alt={product.name} className="w-16 h-16 rounded" />
                   <div className="flex-1">
                     <h3 className="font-medium">{product.name}</h3>
-                    <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+                    <p className="text-sm text-gray-500">Qty: 1</p>
                   </div>
-                  <p className="font-semibold text-sm">₹{product.price * item.quantity}</p>
+                  <p className="font-semibold text-sm">₹{product.price}</p>
                 </div>
-              );
-            })}
-          </div>
-        ))
+              ) : (
+                <p className="text-red-500 text-sm">Product not found</p>
+              )}
+            </div>
+          );
+        })
       )}
     </div>
   );
