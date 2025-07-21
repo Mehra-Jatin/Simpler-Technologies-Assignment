@@ -19,11 +19,8 @@ export const sendVerificationSMS = async (phoneNumber, verificationCode) => {
     const message = await client.messages.create({
       body: `Your Simpler verification code is ${verificationCode} the code will expire in 24 hours.`,
       to: `+91${phoneNumber}`,
-      from: messagingServiceSid ? undefined : phoneNumberFrom,
       messagingServiceSid: messagingServiceSid || undefined, 
     });
-
-    return message;
   } catch (error) {
     console.error(" Failed to send SMS:", error.message);
     throw new Error("SMS sending failed");

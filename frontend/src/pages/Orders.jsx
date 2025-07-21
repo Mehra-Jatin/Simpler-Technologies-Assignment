@@ -49,14 +49,14 @@ const Order = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
+    <div className="max-w-4xl mx-auto p-4 bg-gray-600">
       <h2 className="text-3xl font-bold mb-6 text-center">Your Orders</h2>
 
       {orders.length === 0 ? (
         <p className="text-center">No orders found.</p>
       ) : (
         orders.map((order) => (
-          <div key={order._id} className="mb-6 p-4 bg-base-100 rounded-lg shadow-md">
+          <div key={order._id} className="mb-6 p-4 rounded-lg shadow-md bg-base-100">
             <div className="flex justify-between mb-2">
               <div>
                 <p className="font-semibold">Order ID: {order._id}</p>

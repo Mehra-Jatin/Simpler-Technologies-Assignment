@@ -1,12 +1,12 @@
 import React from 'react';
-import { ShoppingCart, List, LogOut } from 'lucide-react';
+import { ShoppingCart, List, LogOut ,User} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
 
 function Navbar() {
   const navigate = useNavigate();
-  const logout = useAuthStore((state) => state.logout); 
+  const { logout } = useAuthStore();
 
   const handleLogout = async () => {
     try {
@@ -22,6 +22,13 @@ function Navbar() {
     <div className="w-full  flex justify-between items-center mb-6 px-20 py-5 border-b border-base-300">
       <h2 className="text-2xl font-bold text-white">Simpler Auth</h2>
       <div className="flex gap-2">
+        <button
+          className="btn btn-sm flex items-center gap-1 hover:bg-primary/20 transition"
+          onClick={() => navigate('/dashboard')}
+        >
+          <User size={16} /> Profile
+        </button>
+        
         <button
           className="btn btn-sm flex items-center gap-1 hover:bg-primary/20 transition"
           onClick={() => navigate('/shop')}

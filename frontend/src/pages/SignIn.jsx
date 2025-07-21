@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate ,Link} from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
 import { LogIn, Loader } from 'lucide-react';
@@ -9,7 +9,7 @@ const SignIn = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const login = useAuthStore((state) => state.login);
+  const { login } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -21,10 +21,9 @@ const SignIn = () => {
     setLoading(true);
     try {
       await login(identifier, password);
-      toast.success('Login successful');
       navigate('/dashboard');
     } catch {
-      toast.error('Login failed');
+     console.error("Login failed");
     } finally {
       setLoading(false);
     }
@@ -78,6 +77,14 @@ const SignIn = () => {
             "Login"
           )}
         </button>
+         <div className="text-center">
+            <p className="text-base-content/60">
+              Don&apos;t have an account?{" "}
+              <Link to="/signup" className="link link-primary">
+                Create account
+              </Link>
+            </p>
+          </div>
       </form>
     </div>
   );

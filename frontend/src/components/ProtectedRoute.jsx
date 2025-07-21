@@ -4,15 +4,13 @@ import { Navigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 
 const ProtectedRoute = ({ children }) => {
-  const { user, fetchUser, loading } = useAuthStore();
+  const { user, loading } = useAuthStore();
 
-  useEffect(() => {
-    fetchUser();
-  }, []);
+  if (loading) {
+    return <div className="text-center py-20">Loading...</div>;
+  }
 
-  if (loading) return <p>Loading...</p>;
   if (!user) return <Navigate to="/signin" />;
   return children;
 };
-
 export default ProtectedRoute;

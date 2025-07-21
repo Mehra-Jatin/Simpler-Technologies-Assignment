@@ -1,41 +1,87 @@
-
 import { create } from 'zustand';
-import axios from 'axios';
+import { axiosInstance } from '../utils/axios';
+import toast from 'react-hot-toast';
 
-const useAuthStore = create((set) => ({
+const useAuthStore = create((set, get) => ({
   user: null,
   loading: true,
 
-  fetchUser: async () => {
+  login: async (identifier, password) => {
     try {
-      const res = await axios.get('/api/user', { withCredentials: true });
-      set({ user: res.data, loading: false });
+      const res = await axiosInstance.post('/api/auth/login', { identifier, password });
+      set({ user: res.data.user });
+      toast.success("Login successful");
     } catch (err) {
-      set({ user: null, loading: false });
+      toast.error(err.response?.data?.message || "Login failed");
     }
   },
 
-  login: async (identifier, password) => {
-    const res = await axios.post('/api/login', { identifier, password }, { withCredentials: true });
-    set({ user: res.data.user });
-  },
-
   signUp: async (payload) => {
-    await axios.post('/api/signup', payload, { withCredentials: true });
+    try {
+      const res =await axiosInstance.post('/api/auth/signup', payload);
+       if(res.status === 201) {
+        toast.success("Signup successful! Check your email/phone.");
+       }
+       else {
+        toast.error("Signup failed. Please try again.");
+       }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Signup failed");
+    }
   },
 
   logout: async () => {
-    await axios.post('/api/logout', {}, { withCredentials: true });
-    set({ user: null });
+    try {
+      await axiosInstance.post('/api/auth/logout');
+      set({ user: null });
+    } catch (err) {
+      toast.error("Logout failed");
+    }
   },
 
   refreshToken: async () => {
     try {
-      await axios.post('/api/refresh', {}, { withCredentials: true });
+      const res = await axiosInstance.post('/api/auth/refresh-token');
+      return res.status === 200;
     } catch (err) {
-      set({ user: null });
+      return false;
     }
-  }
+  },
+
+  fetchUser: async () => {
+    try {
+      const res = await axiosInstance.get('/api/auth/me');
+      set({ user: res.data.user, loading: false });
+
+    } catch (err) {
+      const refreshed = await get().refreshToken();
+      if (refreshed) {
+        try {
+          const res = await axiosInstance.get('/api/auth/me');
+          set({ user: res.data.user, loading: false });
+        } catch {
+          set({ user: null, loading: false });
+        }
+      } else {
+        set({ user: null, loading: false });
+      }
+    }
+  },
+
+   verifyCode: async (verificationCode) => {
+    try {
+      const res = await axiosInstance.post('/api/auth/verify', { verificationCode });
+      if (res.status === 200) {
+        set({ user: res.data.user });
+        toast.success("Verification successful");
+      } else {
+        toast.error("Verification failed");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Verification failed");
+    }
+  },
+
 }));
 
 export default useAuthStore;

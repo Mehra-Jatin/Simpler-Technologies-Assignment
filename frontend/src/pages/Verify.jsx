@@ -37,10 +37,8 @@ const VerificationPage = () => {
     const verificationCode = code.join("");
     try {
       await verifyCode(verificationCode);
-      toast.success("Email verified successfully");
       navigate("/dashboard");
     } catch (err) {
-      toast.error("Invalid or expired verification code");
       navigate("/signup");
     }
   };

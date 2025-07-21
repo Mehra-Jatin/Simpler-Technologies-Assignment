@@ -13,7 +13,7 @@ export const signUp = async (req, res) => {
     }
 
     const userExists = await User.findOne({
-      $or: [{ email }, { phoneNo }]
+      $or: [{ email }, { phoneNo }],
     });
 
     if (userExists) {
@@ -29,33 +29,15 @@ export const signUp = async (req, res) => {
       isVerified: false,
     });
 
-    const accessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    const refreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_SECRET, { expiresIn: '7d' });
-
-    const hashedRefresh = await bcrypt.hash(refreshToken, 10);
-    user.refreshToken = hashedRefresh;
-
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
     user.verificationToken = verificationCode;
-    user.verificationTokenExpiry = Date.now() +  24*60*60 * 1000; // 24 hours
+    user.verificationTokenExpiry = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
     await user.save();
 
-    await sendVerificationSMS(user.phoneNo, verificationCode);
+    // await sendVerificationSMS(user.phoneNo, verificationCode);
     await sendVerificationEmail(user.email, verificationCode);
-
-    res.cookie("token", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie("refresh", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
 
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
@@ -64,17 +46,19 @@ export const signUp = async (req, res) => {
   }
 };
 
-
 export const login = async (req, res) => {
-  const { identifier, password } = req.body;
+  const identifier = req.body.identifier; // email or phoneNo
+  const password = req.body.password;
 
   try {
     if (!identifier || !password) {
-      return res.status(400).json({ message: "Identifier and password are required" });
+      return res
+        .status(400)
+        .json({ message: "Identifier and password are required" });
     }
 
     const user = await User.findOne({
-      $or: [{ email: identifier }, { phoneNo: identifier }]
+      $or: [{ email: identifier }, { phoneNo: identifier }],
     });
 
     if (!user) {
@@ -90,24 +74,31 @@ export const login = async (req, res) => {
       return res.status(403).json({ message: "User not verified" });
     }
 
-    const accessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    const refreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_SECRET, { expiresIn: '7d' });
+    const accessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+    const refreshToken = jwt.sign(
+      { id: user._id },
+      process.env.REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
 
     const hashedRefresh = await bcrypt.hash(refreshToken, 10);
     user.refreshToken = hashedRefresh;
     await user.save();
 
+    const isProduction = process.env.NODE_ENV === "production";
     res.cookie("token", accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
-      maxAge: 15 * 60 * 1000,
+      secure: isProduction,
+      sameSite: isProduction ? "None" : "Lax",
+      maxAge: 1 * 60 * 60 * 1000,
     });
 
     res.cookie("refresh", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
+      secure: isProduction,
+      sameSite: isProduction ? "None" : "Lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -126,7 +117,6 @@ export const login = async (req, res) => {
     return res.status(500).json({ message: "Internal server error", error });
   }
 };
-
 
 export const loginWithRefreshToken = async (req, res) => {
   const { refresh: refreshToken } = req.cookies;
@@ -147,23 +137,29 @@ export const loginWithRefreshToken = async (req, res) => {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
 
-    const newAccessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    const newRefreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_SECRET, { expiresIn: '7d' });
+    const newAccessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+    const newRefreshToken = jwt.sign(
+      { id: user._id },
+      process.env.REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
 
     user.refreshToken = await bcrypt.hash(newRefreshToken, 10);
     await user.save();
-
+    const isProduction = process.env.NODE_ENV === "production";
     res.cookie("token", newAccessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
-      maxAge: 15 * 60 * 1000,
+      secure: isProduction,
+      sameSite: isProduction ? "None" : "Lax",
+      maxAge: 1 * 60 * 60 * 1000,
     });
 
     res.cookie("refresh", newRefreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
+      secure: isProduction,
+      sameSite: isProduction ? "None" : "Lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -174,28 +170,18 @@ export const loginWithRefreshToken = async (req, res) => {
   }
 };
 
-
-
 export const logout = async (req, res) => {
-  const userId = req.user?.id;
-  if (!userId) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
   try {
-    const user = await User.findById(userId);
-    user.refreshToken = null;
-    await user.save();
-
+    const isProduction = process.env.NODE_ENV === "production";
     res.clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
+      secure: isProduction,
+      sameSite: isProduction ? "None" : "Lax",
     });
     res.clearCookie("refresh", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
+      secure: isProduction,
+      sameSite: isProduction ? "None" : "Lax",
     });
 
     res.status(200).json({ message: "Logged out successfully" });
@@ -205,29 +191,83 @@ export const logout = async (req, res) => {
   }
 };
 
-
 export const verifyUser = async (req, res) => {
-     const { verificationCode } = req.body;
-    try {
-        const user = await User.findOne({ verificationToken: verificationCode, verificationTokenExpiry: { $gt: Date.now() } });
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        if (user.isVerified) {
-            return res.status(400).json({ message: "User already verified" });
-        }
-        if (user.verificationToken !== verificationCode || user.verificationTokenExpiry < Date.now()) {
-            return res.status(400).json({ message: "Invalid or expired verification code" });
-        }
-        user.isVerified = true;
-        user.verificationToken = null;
-        user.verificationTokenExpiry = null;
-        await user.save();
-        res.status(200).json({ message: "User verified successfully" });
-    } catch (error) {
-        console.error("Error verifying user:", error);
-        return res.status(500).json({ message: "Internal server error", error });
+  const { verificationCode } = req.body;
+  try {
+    const user = await User.findOne({
+      verificationToken: verificationCode,
+      verificationTokenExpiry: { $gt: Date.now() },
+    });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-}
+    if (user.isVerified) {
+      return res.status(400).json({ message: "User already verified" });
+    }
+    if (
+      user.verificationToken !== verificationCode ||
+      user.verificationTokenExpiry < Date.now()
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired verification code" });
+    }
+    user.isVerified = true;
+    user.verificationToken = null;
+    user.verificationTokenExpiry = null;
+    await user.save();
 
+    const accessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+    const refreshToken = jwt.sign(
+      { id: user._id },
+      process.env.REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
 
+    const hashedRefresh = await bcrypt.hash(refreshToken, 10);
+    user.refreshToken = hashedRefresh;
+    await user.save();
+
+    const isProduction = process.env.NODE_ENV === "production";
+    res.cookie("token", accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "None" : "Lax",
+      maxAge: 1 * 60 * 60 * 1000,
+    });
+
+    res.cookie("refresh", refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "None" : "Lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({ message: "User verified successfully" , user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phoneNo: user.phoneNo,
+        isVerified: user.isVerified,
+      } });
+  } catch (error) {
+    console.error("Error verifying user:", error);
+    return res.status(500).json({ message: "Internal server error", error });
+  }
+};
+
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select(
+      "-password -refreshToken"
+    );
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json({ user });
+  } catch (err) {
+    console.error("Auth check failed", err);
+    res.status(401).json({ message: "Invalid token" });
+  }
+};

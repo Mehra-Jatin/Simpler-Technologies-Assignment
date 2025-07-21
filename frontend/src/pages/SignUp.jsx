@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,Link } from 'react-router-dom';
 import { UserPlus, Loader } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
@@ -13,7 +13,7 @@ const SignUp = () => {
   });
   const [loading, setLoading] = useState(false);
 
-  const signUp = useAuthStore((state) => state.signUp);
+  const { signUp } = useAuthStore();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -29,10 +29,9 @@ const SignUp = () => {
     setLoading(true);
     try {
       await signUp(form);
-      toast.success('Signup successful! Check your email/phone.');
-      navigate('/signin');
+      navigate('/verify');
     } catch {
-      toast.error('Signup failed.');
+      navigate('/signin');
     } finally {
       setLoading(false);
     }
@@ -107,7 +106,16 @@ const SignUp = () => {
             "Sign Up"
           )}
         </button>
+         <div className="text-center">
+            <p className="text-base-content/60">
+              Already have an account?{" "}
+              <Link to="/signin" className="link link-primary">
+                Sign in
+              </Link>
+            </p>
+          </div>
       </form>
+       
     </div>
   );
 };

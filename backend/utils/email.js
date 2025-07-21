@@ -1,9 +1,14 @@
-import { MailtrapClient } from "mailtrap";
+import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
 
-const mailtrapClient = new MailtrapClient({
-  token: process.env.MAILTRAP_API_TOKEN,
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST,
+  port: parseInt(process.env.EMAIL_PORT),
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
 const sender = {
@@ -91,15 +96,15 @@ export const sendVerificationEmail = async (to, verificationCode) => {
   try {
     console.log(`Sending verification email to ${to} with code ${verificationCode}`);
 
-    const response = await mailtrapClient.send({
-      from: sender,
-      to: [{ email: to }],
+    const info = await transporter.sendMail({
+      from: `"${sender.name}" <${sender.email}>`,
+      to,
       subject: "Email Verification",
-      text: `Your verification code is ${verificationCode}`, 
-      html: verificationEmailHTML(verificationCode), 
+      text: `Your verification code is ${verificationCode}`,
+      html: verificationEmailHTML(verificationCode),
     });
 
-    console.log("Email sent successfully:", response);
+    console.log("Email sent:", info.messageId);
   } catch (error) {
     console.error("Error sending email:", error);
     throw new Error("Failed to send verification email");

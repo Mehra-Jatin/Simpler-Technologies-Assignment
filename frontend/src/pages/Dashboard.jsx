@@ -1,14 +1,24 @@
 import useAuthStore from '../store/authStore';
-import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
-
+import { useEffect,useState} from 'react';
 const Dashboard = () => {
-  const { user} = useAuthStore();
+  const { user , fetchUser } = useAuthStore();
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const loadUser = async () => {
+      await fetchUser();
+      setLoading(false);
+    };
+    loadUser();
+  }, [fetchUser]);
   return (
-    <div className="min-h-screen bg-base-50 flex flex-col items-center px-4 py-6">
-      {/* ID Card */}
-      <div className="bg-base-100 border border-base-300 rounded-lg shadow-xl p-10 w-80 h-[600px] flex flex-col items-center relative">
-        <h2 className="text-xl font-bold text-white mb-3">USER PROFILE</h2>
+    loading ? (
+      <div className="text-center py-20">Loading...</div>
+    ) : (
+      <div className="min-h-screen bg-base-50 flex flex-col items-center px-4 py-6">
+        {/* ID Card */}
+        <div className="bg-base-100 border border-base-300 rounded-lg shadow-xl p-10 w-80 h-[600px] flex flex-col items-center relative">
+          <h2 className="text-xl font-bold text-white mb-3">USER PROFILE</h2>
 
         <div className="w-24 h-24 rounded-full bg-base-300 mb-4 flex items-center justify-center overflow-hidden">
           <img
@@ -36,7 +46,7 @@ const Dashboard = () => {
         </div>
       </div>
     </div>
-  );
+  ));
 };
 
 export default Dashboard;
